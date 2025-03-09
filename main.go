@@ -28,7 +28,10 @@ func NewTrie(value int, isEnd bool) *TrieNode {
 }
 
 func (root *TrieNode) Add(key string, val int) {
-	_insert(root, strings.ToLower(key), val, 0)
+	// _insert(root, strings.ToLower(key), val, 0)
+	var nRoot = InitTrie()
+	_put(root, nRoot, strings.ToLower(key), val, 0, 1)
+	root.Nodes = nRoot.Nodes
 }
 
 func _insert(root *TrieNode, key string, val, index int) {
@@ -52,6 +55,38 @@ func _insert(root *TrieNode, key string, val, index int) {
 	// fmt.Printf("char_pos: %v, Address: %v\n", charPos, &root.Nodes[charPos].Value)
 
 	_insert(root.Nodes[charPos], key, val, index+1)
+}
+
+func _put(root, nRoot *TrieNode, key string, val, index, isRootToConsider int) {
+	if index >= len(key) {
+		return
+	}
+
+	var charPos = int(key[index]) - 97
+
+	nRoot.Nodes[charPos] = NewTrie(0, false)
+	if isRootToConsider == 1 {
+		// ignore all the nodes which doesnt lie in root to node path
+		for i := range 26 {
+			if i == charPos {
+				continue
+			}
+			nRoot.Nodes[i] = root.Nodes[i]
+		}
+
+		if root.Nodes[charPos] != nil {
+			_put(root.Nodes[charPos], nRoot.Nodes[charPos], key, val, index+1, 1)
+		} else {
+			_put(root, nRoot.Nodes[charPos], key, val, index+1, 0)
+		}
+	} else {
+		_put(root, nRoot.Nodes[charPos], key, val, index+1, 0)
+	}
+
+	if index == (len(key) - 1) {
+		nRoot.Nodes[charPos].Value = val
+		nRoot.Nodes[charPos].IsEnd = true
+	}
 }
 
 func (root *TrieNode) Get(key string) int {
@@ -79,10 +114,10 @@ func main() {
 	var root = InitTrie()
 
 	root.Add("apple", 20)
-	fmt.Println()
+	// fmt.Println(root)
 
 	root.Add("apply", 23)
-	fmt.Println()
+	// // fmt.Println()
 
 	var val = root.Get("apple")
 	fmt.Printf("key: %v, val: %v\n", "apple", val)
